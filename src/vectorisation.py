@@ -14,8 +14,8 @@ METADATA_FILE = "./temp/metadata.json"
 OUTPUT_CSV = "./temp/transaction_matches.csv"
 
 # ----------------- LOAD DATA -----------------
-master = pd.read_csv('./master.csv')
-transaction = pd.read_csv('./jan-22.csv', nrows=10)
+master = pd.read_csv('./dataset/master.csv')
+transaction = pd.read_csv('./dataset/jan-22.csv', nrows=10)
 
 m_columns = ['itemcode', 'catcode', 'company', 'mbrand', 'brand', 'sku', 'packtype', 'base_pack', 'flavor', 'color', 'wght', 'uom', 'mrp']
 t_columns = ['CATEGORY', 'MANUFACTURE', 'BRAND', 'ITEMDESC', 'MRP', 'PACKSIZE', 'PACKTYPE']
@@ -30,11 +30,11 @@ def get_embedding(text):
         response = ollama.embeddings(model=MODEL_NAME, prompt=text)
         return np.array(response["embedding"], dtype=np.float32)
     except Exception as e:
-        print(f"Error embedding text: {e}")
+        print(f"|ERROR| Error embedding text: {e}")
         return None
 
 # # ----------------- PREPARE MASTER EMBEDDINGS -----------------
-# print(f"Generating embeddings for {len(master)} master rows...")
+# print(f"|INFO| Generating embeddings for {len(master)} master rows...")
 # texts = []
 # itemcodes = []
 # metadata = {}
@@ -72,10 +72,10 @@ def get_embedding(text):
 # with open(METADATA_FILE, "w") as f:
 #     json.dump(metadata, f, indent=2)
 
-# print(f"Saved {len(embeddings)} embeddings to {FAISS_INDEX_FILE} and metadata to {METADATA_FILE}")
+# print(f"|INFO| Saved {len(embeddings)} embeddings to {FAISS_INDEX_FILE} and metadata to {METADATA_FILE}")
 
 # ----------------- QUERY TRANSACTIONS AND SAVE -----------------
-print(f"\nQuerying {len(transaction)} transaction rows...")
+print(f"\n|INFO| Querying {len(transaction)} transaction rows...")
 
 # Load FAISS index
 index = faiss.read_index(FAISS_INDEX_FILE)
@@ -96,24 +96,48 @@ for _, row in tqdm(transaction.iterrows(), total=len(transaction), desc="Transac
         for rank, (idx, dist) in enumerate(zip(indices[0], distances[0])):
             itemcode = itemcodes[idx]
             metadata_item = metadata[itemcode]
-            metadata_str = "; ".join([f"{k}={v}" for k, v in metadata_item.items()])
-            results_list.append({
-                "transaction_text": query_text,
+            
+            result_entry = {
                 "rank": rank + 1,
                 "matched_itemcode": itemcode,
-                "distance": dist,
-                "metadata": metadata_str
-            })
+                "distance": dist
+            }
+            
+            # Add all transaction columns with prefix t_
+            for col in transaction.columns:
+                result_entry[f"t_{col}"] = row[col]
+            
+            # Add master metadata as separate columns prefixed with m_
+            for k, v in metadata_item.items():
+                result_entry[f"m_{k}"] = v
+            
+            results_list.append(result_entry)
     else:
-        results_list.append({
-            "transaction_text": query_text,
+        result_entry = {
             "rank": None,
             "matched_itemcode": None,
-            "distance": None,
-            "metadata": None
-        })
+            "distance": None
+        }
+        
+        # Add all transaction columns with prefix t_
+        for col in transaction.columns:
+            result_entry[f"t_{col}"] = row[col]
+        
+        # Add empty master metadata columns
+        for k in master.columns:
+            if k != "itemcode":  # skip itemcode, it's already in matched_itemcode
+                result_entry[f"m_{k}"] = None
+        
+        results_list.append(result_entry)
 
-# Save results to CSV
+# Save results to CSV with transaction columns first
 results_df = pd.DataFrame(results_list)
+
+# Build ordered column list: transaction first, then match info, then master metadata
+t_cols_prefixed = [f"t_{c}" for c in t_columns]
+m_cols_prefixed = [f"m_{c}" for c in master.columns if c != "itemcode"]
+ordered_cols = t_cols_prefixed + ["rank", "matched_itemcode", "distance"] + m_cols_prefixed
+results_df = results_df[ordered_cols]
+
 results_df.to_csv(OUTPUT_CSV, index=False)
-print(f"Saved transaction matches to {OUTPUT_CSV}")
+print(f"|INFO| Saved transaction matches to {OUTPUT_CSV}")
