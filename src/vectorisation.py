@@ -5,6 +5,7 @@ import ollama
 import faiss
 import json
 from tqdm import tqdm
+import re
 
 # ----------------- CONFIG -----------------
 MODEL_NAME = "nomic-embed-text"
@@ -12,10 +13,11 @@ MODEL_NAME = "nomic-embed-text"
 FAISS_INDEX_FILE = "./temp/master_index.faiss"
 METADATA_FILE = "./temp/metadata.json"
 OUTPUT_CSV = "./temp/transaction_matches.csv"
+FINAL_OUTPUT_CSV = "./temp/transaction_final_matches.csv"
 
 # ----------------- LOAD DATA -----------------
 master = pd.read_csv('./dataset/master.csv')
-transaction = pd.read_csv('./dataset/jan-22.csv', nrows=10)
+transaction = pd.read_csv('./dataset/transaction/jan-22.csv')
 
 m_columns = ['itemcode', 'catcode', 'company', 'mbrand', 'brand', 'sku', 'packtype', 'base_pack', 'flavor', 'color', 'wght', 'uom', 'mrp']
 t_columns = ['CATEGORY', 'MANUFACTURE', 'BRAND', 'ITEMDESC', 'MRP', 'PACKSIZE', 'PACKTYPE']
@@ -141,3 +143,48 @@ results_df = results_df[ordered_cols]
 
 results_df.to_csv(OUTPUT_CSV, index=False)
 print(f"|INFO| Saved transaction matches to {OUTPUT_CSV}")
+
+# ----------------- HELPER: Extract numeric from PACKTYPE -----------------
+def extract_numeric(val):
+    """Extract the first numeric value from a string, else return None."""
+    if pd.isna(val):
+        return None
+    match = re.search(r"\d+(\.\d+)?", str(val))
+    return float(match.group()) if match else None
+
+# ----------------- PROCESS FILTERED OUTPUT -----------------
+final_results = []
+
+# Group results by transaction row (we assume all suggestions have the same t_ columns per transaction)
+grouped = results_df.groupby([col for col in results_df.columns if col.startswith("t_")])
+
+for _, group in grouped:
+    # Get numeric part from t_PACKTYPE (all rows in group have the same transaction values)
+    t_packtype_val = group.iloc[0]["t_PACKTYPE"]
+    t_num = extract_numeric(t_packtype_val)
+
+    chosen_row = None
+
+    if t_num is not None:
+        # Try to find a match in m_wght
+        for _, row in group.iterrows():
+            try:
+                m_wght_val = float(row["m_wght"])
+                if m_wght_val == t_num:
+                    chosen_row = row
+                    break
+            except (ValueError, TypeError):
+                continue
+
+    # If no match found, take first suggestion (rank=1)
+    if chosen_row is None:
+        chosen_row = group.sort_values("rank").iloc[0]
+
+    final_results.append(chosen_row)
+
+# Build final dataframe
+final_df = pd.DataFrame(final_results)
+
+# Save new CSV
+final_df.to_csv(FINAL_OUTPUT_CSV, index=False)
+print(f"Saved final filtered matches to {FINAL_OUTPUT_CSV}")
