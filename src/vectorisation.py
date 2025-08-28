@@ -17,7 +17,7 @@ FINAL_OUTPUT_CSV = "./temp/transaction_final_matches.csv"
 
 # ----------------- LOAD DATA -----------------
 master = pd.read_csv('./dataset/master.csv')
-transaction = pd.read_csv('./dataset/transaction/jan-22.csv')
+transaction = pd.read_csv('./dataset/transaction/dec-24.csv')
 
 m_columns = ['itemcode', 'catcode', 'company', 'mbrand', 'brand', 'sku', 'packtype', 'base_pack', 'flavor', 'color', 'wght', 'uom', 'mrp']
 t_columns = ['CATEGORY', 'MANUFACTURE', 'BRAND', 'ITEMDESC', 'MRP', 'PACKSIZE', 'PACKTYPE']
@@ -160,7 +160,7 @@ grouped = results_df.groupby([col for col in results_df.columns if col.startswit
 
 for _, group in grouped:
     # Get numeric part from t_PACKTYPE (all rows in group have the same transaction values)
-    t_packtype_val = group.iloc[0]["t_PACKTYPE"]
+    t_packtype_val = group.iloc[0]["t_PACKSIZE"]
     t_num = extract_numeric(t_packtype_val)
 
     chosen_row = None
