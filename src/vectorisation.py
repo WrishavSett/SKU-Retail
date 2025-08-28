@@ -10,14 +10,18 @@ import re
 # ----------------- CONFIG -----------------
 MODEL_NAME = "nomic-embed-text"
 
+master_file_path = './dataset/master.csv'
+transaction_file_path = './dataset/transaction/jan-22.csv'
+transaction_name = os.path.basename(transaction_file_path).split('.')[0]
+
 FAISS_INDEX_FILE = "./temp/master_index.faiss"
 METADATA_FILE = "./temp/metadata.json"
-OUTPUT_CSV = "./temp/transaction_matches.csv"
-FINAL_OUTPUT_CSV = "./temp/transaction_final_matches.csv"
+OUTPUT_CSV = f"./temp/{transaction_name}_transaction_matches.csv"
+FINAL_OUTPUT_CSV = f"./temp/{transaction_name}_final_matches.csv"
 
 # ----------------- LOAD DATA -----------------
-master = pd.read_csv('./dataset/master.csv')
-transaction = pd.read_csv('./dataset/transaction/dec-24.csv')
+master = pd.read_csv(master_file_path)
+transaction = pd.read_csv(transaction_file_path)
 
 m_columns = ['itemcode', 'catcode', 'company', 'mbrand', 'brand', 'sku', 'packtype', 'base_pack', 'flavor', 'color', 'wght', 'uom', 'mrp']
 t_columns = ['CATEGORY', 'MANUFACTURE', 'BRAND', 'ITEMDESC', 'MRP', 'PACKSIZE', 'PACKTYPE']
@@ -77,7 +81,7 @@ def get_embedding(text):
 # print(f"|INFO| Saved {len(embeddings)} embeddings to {FAISS_INDEX_FILE} and metadata to {METADATA_FILE}")
 
 # ----------------- QUERY TRANSACTIONS AND SAVE -----------------
-print(f"\n|INFO| Querying {len(transaction)} transaction rows...")
+print(f"\n|INFO| Querying {len(transaction)} transaction rows for {transaction_name}...")
 
 # Load FAISS index
 index = faiss.read_index(FAISS_INDEX_FILE)
@@ -160,7 +164,7 @@ grouped = results_df.groupby([col for col in results_df.columns if col.startswit
 
 for _, group in grouped:
     # Get numeric part from t_PACKTYPE (all rows in group have the same transaction values)
-    t_packtype_val = group.iloc[0]["t_PACKSIZE"]
+    t_packtype_val = group.iloc[0]["t_PACKTYPE"]
     t_num = extract_numeric(t_packtype_val)
 
     chosen_row = None
