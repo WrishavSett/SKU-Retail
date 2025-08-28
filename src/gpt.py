@@ -9,3 +9,7 @@ import re
 import json
 import ollama
 
+prompt = f"""
+Item Description: {t_itemdesc}
+SKU List: {json.dumps(m_sku_list, indent=2)}
+"""
