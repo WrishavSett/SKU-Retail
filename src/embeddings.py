@@ -21,13 +21,13 @@ FINAL_OUTPUT_CSV = f"./temp/{transaction_name}_final_matches.csv"
 
 # ----------------- LOAD DATA -----------------
 master = pd.read_csv(master_file_path).reset_index(drop=True)
-transaction = pd.read_csv(transaction_file_path).reset_index(drop=True)
+transaction_full = pd.read_csv(transaction_file_path).reset_index(drop=True)
 
 m_columns = ['itemcode', 'catcode', 'company', 'mbrand', 'brand', 'sku', 'packtype', 'base_pack', 'flavor', 'color', 'wght', 'uom', 'mrp']
 t_columns = ['CATEGORY', 'MANUFACTURE', 'BRAND', 'ITEMDESC', 'MRP', 'PACKSIZE', 'PACKTYPE']
 
-master_copy = master[m_columns].reset_index(drop=True)
-transaction_copy = transaction[t_columns].reset_index(drop=True)
+master = master[m_columns].reset_index(drop=True)
+transaction_proc = transaction_full[t_columns].reset_index(drop=True)
 
 # ----------------- FUNCTION: EMBEDDING -----------------
 def get_embedding(text):
@@ -81,7 +81,7 @@ def get_embedding(text):
 # print(f"|INFO| Saved {len(embeddings)} embeddings to {FAISS_INDEX_FILE} and metadata to {METADATA_FILE}")
 
 # ----------------- QUERY TRANSACTIONS AND SAVE -----------------
-print(f"\n|INFO| Querying {len(transaction_copy)} transaction rows for {transaction_name}...")
+print(f"\n|INFO| Querying {len(transaction_proc)} transaction rows for {transaction_name}...")
 
 # Load FAISS index
 index = faiss.read_index(FAISS_INDEX_FILE)
@@ -91,7 +91,7 @@ with open(METADATA_FILE, "r") as f:
 itemcodes = list(metadata.keys())
 results_list = []
 
-for i, row in tqdm(transaction_copy.iterrows(), total=len(transaction_copy), desc="Transaction Queries"):
+for i, row in tqdm(transaction_proc.iterrows(), total=len(transaction_proc), desc="Transaction Queries"):
     query_text = " ".join(str(val) for val in row if pd.notna(val))
     query_emb = get_embedding(query_text)
     
@@ -110,8 +110,8 @@ for i, row in tqdm(transaction_copy.iterrows(), total=len(transaction_copy), des
             }
             
             # Add all transaction columns with prefix t_
-            for col in transaction.columns:
-                result_entry[f"t_{col}"] = transaction.iloc[i][col]
+            for col in transaction_full.columns:
+                result_entry[f"t_{col}"] = transaction_full.iloc[i][col]
             
             # Add master metadata as separate columns prefixed with m_
             for k, v in metadata_item.items():
@@ -126,8 +126,8 @@ for i, row in tqdm(transaction_copy.iterrows(), total=len(transaction_copy), des
         }
         
         # Add all transaction columns with prefix t_
-        for col in transaction.columns:
-            result_entry[f"t_{col}"] = transaction.iloc[i][col]
+        for col in transaction_full.columns:
+            result_entry[f"t_{col}"] = transaction_full.iloc[i][col]
         
         # Add empty master metadata columns
         for k in master.columns:
@@ -140,7 +140,7 @@ for i, row in tqdm(transaction_copy.iterrows(), total=len(transaction_copy), des
 results_df = pd.DataFrame(results_list)
 
 # Build ordered column list: transaction first, then match info, then master metadata
-t_cols_prefixed = [f"t_{c}" for c in transaction.columns]
+t_cols_prefixed = [f"t_{c}" for c in transaction_full.columns]
 m_cols_prefixed = [f"m_{c}" for c in master.columns if c != "itemcode"]
 ordered_cols = t_cols_prefixed + ["rank", "matched_itemcode", "distance"] + m_cols_prefixed
 results_df = results_df[ordered_cols]
