@@ -35,12 +35,26 @@ class EmbeddingPipeline:
 
             metadata[itemcode] = row.drop("itemcode").to_dict()
 
+        embedding_dim = None
+        pending_fallbacks = 0   # count of rows failed before first success
+        
         for text in tqdm(texts, desc="Fetching Embeddings"):
             emb = self.get_embedding(text)
             if emb is not None:
+                if embedding_dim is None:
+                    embedding_dim = emb.shape[0]
+                    # Fix all previously failed rows with zero vectors
+                    embeddings.extend([np.zeros(embedding_dim, dtype=np.float32) for _ in range(pending_fallbacks)])
                 embeddings.append(emb)
             else:
-                embeddings.append(np.zeros(1536, dtype=np.float32))  # adjust if dimension differs
+                # embeddings.append(np.zeros(1536, dtype=np.float32))  # adjust if dimension differs
+                if embedding_dim is None:
+                    pending_fallbacks += 1
+                else:
+                    embeddings.append(np.zeros(embedding_dim, dtype=np.float32))
+
+        if embedding_dim is None:
+            raise ValueError("|ERROR| No embeddings could be generated from the master data.")
 
         embeddings_np = np.vstack(embeddings).astype('float32')
 

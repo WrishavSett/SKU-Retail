@@ -20,7 +20,7 @@ class TransactionMatcher:
     def query_transactions(self):
         """Query FAISS index with transaction data and save matches."""
         transaction_full = pd.read_csv(self.config.transaction_file_path)
-        transaction_proc = pd.read_csv(self.config.transaction_file_path)[self.config.t_columns]
+        transaction_proc = transaction_full[self.config.t_columns]
 
         index = faiss.read_index(self.config.FAISS_INDEX_FILE)
         with open(self.config.METADATA_FILE, "r") as f:
@@ -54,7 +54,7 @@ class TransactionMatcher:
                 result_entry = {"rank": None, "matched_itemcode": None, "distance": None}
                 for col in transaction_full.columns:
                     result_entry[f"t_{col}"] = transaction_full.iloc[i][col]
-                for k in metadata.keys():
+                for k in Config.m_columns:
                     result_entry[f"m_{k}"] = None
                 results_list.append(result_entry)
 
