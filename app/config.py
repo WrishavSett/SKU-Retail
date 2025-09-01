@@ -6,7 +6,7 @@ class Config:
 
     # File paths
     master_file_path = './dataset/master.csv'
-    transaction_file_path = './dataset/transaction/jan-22.csv'
+    transaction_file_path = './dataset/transaction/dec-24.csv'
     transaction_name = os.path.basename(transaction_file_path).split('.')[0]
 
     FAISS_INDEX_FILE = "./temp/master_index.faiss"

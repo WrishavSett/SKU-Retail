@@ -19,7 +19,8 @@ class TransactionMatcher:
 
     def query_transactions(self):
         """Query FAISS index with transaction data and save matches."""
-        transaction = pd.read_csv(self.config.transaction_file_path)[self.config.t_columns]
+        transaction_full = pd.read_csv(self.config.transaction_file_path)
+        transaction_proc = pd.read_csv(self.config.transaction_file_path)[self.config.t_columns]
 
         index = faiss.read_index(self.config.FAISS_INDEX_FILE)
         with open(self.config.METADATA_FILE, "r") as f:
@@ -28,12 +29,12 @@ class TransactionMatcher:
         itemcodes = list(metadata.keys())
         results_list = []
 
-        for _, row in tqdm(transaction.iterrows(), total=len(transaction), desc="Transaction Queries"):
+        for i, row in tqdm(transaction_proc.iterrows(), total=len(transaction_proc), desc="Transaction Queries"):
             query_text = " ".join(str(val) for val in row if pd.notna(val))
             query_emb = self.pipeline.get_embedding(query_text)
 
             if query_emb is not None:
-                distances, indices = index.search(query_emb.reshape(1, -1), k=10)
+                distances, indices = index.search(query_emb.reshape(1, -1), k=3)
                 for rank, (idx, dist) in enumerate(zip(indices[0], distances[0])):
                     itemcode = itemcodes[idx]
                     metadata_item = metadata[itemcode]
@@ -43,22 +44,22 @@ class TransactionMatcher:
                         "matched_itemcode": itemcode,
                         "distance": dist
                     }
-                    for col in transaction.columns:
-                        result_entry[f"t_{col}"] = row[col]
+                    for col in transaction_full.columns:
+                        result_entry[f"t_{col}"] = transaction_full.iloc[i][col]
                     for k, v in metadata_item.items():
                         result_entry[f"m_{k}"] = v
                     results_list.append(result_entry)
             else:
                 # Fallback when no embedding
                 result_entry = {"rank": None, "matched_itemcode": None, "distance": None}
-                for col in transaction.columns:
-                    result_entry[f"t_{col}"] = row[col]
+                for col in transaction_full.columns:
+                    result_entry[f"t_{col}"] = transaction_full.iloc[i][col]
                 for k in metadata.keys():
                     result_entry[f"m_{k}"] = None
                 results_list.append(result_entry)
 
         results_df = pd.DataFrame(results_list)
-        t_cols_prefixed = [f"t_{c}" for c in self.config.t_columns]
+        t_cols_prefixed = [f"t_{c}" for c in transaction_full.columns]
         m_cols_prefixed = [f"m_{c}" for c in Config.m_columns if c != "itemcode"]
         ordered_cols = t_cols_prefixed + ["rank", "matched_itemcode", "distance"] + m_cols_prefixed
         results_df = results_df[ordered_cols]
