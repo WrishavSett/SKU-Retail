@@ -2,6 +2,7 @@ import pandas as pd
 import faiss
 import json
 import re
+import numpy as np
 from tqdm import tqdm
 from config import Config
 from embedding_pipeline import EmbeddingPipeline
@@ -34,6 +35,30 @@ class TransactionMatcher:
             query_emb = self.pipeline.get_embedding(query_text)
 
             if query_emb is not None:
+                # # Ensure embedding matches FAISS index dimension
+                # if query_emb.shape[0] != index.d:
+                #     print(f"|WARN| Skipping transaction row {i}: embedding dim {query_emb.shape[0]} != index dim {index.d}")
+                #     # fallback entry with None
+                #     result_entry = {"rank": None, "matched_itemcode": None, "distance": None}
+                #     for col in transaction_full.columns:
+                #         result_entry[f"t_{col}"] = transaction_full.iloc[i][col]
+                #     for k in Config.m_columns:
+                #         result_entry[f"m_{k}"] = None
+                #     results_list.append(result_entry)
+                #     continue  # skip to next row
+
+                # Pad or truncate to match FAISS index dimension
+                if query_emb.shape[0] < index.d:
+                    padded_emb = np.zeros(index.d, dtype=np.float32)
+                    padded_emb[:query_emb.shape[0]] = query_emb
+                    query_emb = padded_emb
+                    print(f"|INFO| Padded query embedding for row {i} from {query_emb.shape[0]} to {index.d} dimensions.")
+                    print(f"       Row data: {transaction_full.iloc[i].to_dict()}")
+                elif query_emb.shape[0] > index.d:
+                    print(f"|INFO| Truncating query embedding for row {i} from {query_emb.shape[0]} to {index.d} dimensions.")
+                    print(f"       Row data: {transaction_full.iloc[i].to_dict()}")
+                    query_emb = query_emb[:index.d]
+
                 distances, indices = index.search(query_emb.reshape(1, -1), k=3)
                 for rank, (idx, dist) in enumerate(zip(indices[0], distances[0])):
                     itemcode = itemcodes[idx]
