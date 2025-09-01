@@ -11,7 +11,7 @@ import re
 MODEL_NAME = "nomic-embed-text"
 
 master_file_path = './dataset/master.csv'
-transaction_file_path = './dataset/transaction/jan-22.csv'
+transaction_file_path = './dataset/transaction/dec-24.csv'
 transaction_name = os.path.basename(transaction_file_path).split('.')[0]
 
 FAISS_INDEX_FILE = "./temp/master_index.faiss"
@@ -20,14 +20,14 @@ OUTPUT_CSV = f"./temp/{transaction_name}_transaction_matches.csv"
 FINAL_OUTPUT_CSV = f"./temp/{transaction_name}_final_matches.csv"
 
 # ----------------- LOAD DATA -----------------
-master = pd.read_csv(master_file_path)
-transaction = pd.read_csv(transaction_file_path)
+master = pd.read_csv(master_file_path).reset_index(drop=True)
+transaction = pd.read_csv(transaction_file_path).reset_index(drop=True)
 
 m_columns = ['itemcode', 'catcode', 'company', 'mbrand', 'brand', 'sku', 'packtype', 'base_pack', 'flavor', 'color', 'wght', 'uom', 'mrp']
 t_columns = ['CATEGORY', 'MANUFACTURE', 'BRAND', 'ITEMDESC', 'MRP', 'PACKSIZE', 'PACKTYPE']
 
-master = master[m_columns]
-transaction = transaction[t_columns]
+master_copy = master[m_columns].reset_index(drop=True)
+transaction_copy = transaction[t_columns].reset_index(drop=True)
 
 # ----------------- FUNCTION: EMBEDDING -----------------
 def get_embedding(text):
@@ -81,7 +81,7 @@ def get_embedding(text):
 # print(f"|INFO| Saved {len(embeddings)} embeddings to {FAISS_INDEX_FILE} and metadata to {METADATA_FILE}")
 
 # ----------------- QUERY TRANSACTIONS AND SAVE -----------------
-print(f"\n|INFO| Querying {len(transaction)} transaction rows for {transaction_name}...")
+print(f"\n|INFO| Querying {len(transaction_copy)} transaction rows for {transaction_name}...")
 
 # Load FAISS index
 index = faiss.read_index(FAISS_INDEX_FILE)
@@ -91,13 +91,13 @@ with open(METADATA_FILE, "r") as f:
 itemcodes = list(metadata.keys())
 results_list = []
 
-for _, row in tqdm(transaction.iterrows(), total=len(transaction), desc="Transaction Queries"):
+for i, row in tqdm(transaction_copy.iterrows(), total=len(transaction_copy), desc="Transaction Queries"):
     query_text = " ".join(str(val) for val in row if pd.notna(val))
     query_emb = get_embedding(query_text)
     
     if query_emb is not None:
         query_np = np.array([query_emb]).astype('float32')
-        distances, indices = index.search(query_np, k=10)
+        distances, indices = index.search(query_np, k=3)    # 3 for 3 suggestions
         
         for rank, (idx, dist) in enumerate(zip(indices[0], distances[0])):
             itemcode = itemcodes[idx]
@@ -111,7 +111,7 @@ for _, row in tqdm(transaction.iterrows(), total=len(transaction), desc="Transac
             
             # Add all transaction columns with prefix t_
             for col in transaction.columns:
-                result_entry[f"t_{col}"] = row[col]
+                result_entry[f"t_{col}"] = transaction.iloc[i][col]
             
             # Add master metadata as separate columns prefixed with m_
             for k, v in metadata_item.items():
@@ -127,7 +127,7 @@ for _, row in tqdm(transaction.iterrows(), total=len(transaction), desc="Transac
         
         # Add all transaction columns with prefix t_
         for col in transaction.columns:
-            result_entry[f"t_{col}"] = row[col]
+            result_entry[f"t_{col}"] = transaction.iloc[i][col]
         
         # Add empty master metadata columns
         for k in master.columns:
@@ -140,7 +140,7 @@ for _, row in tqdm(transaction.iterrows(), total=len(transaction), desc="Transac
 results_df = pd.DataFrame(results_list)
 
 # Build ordered column list: transaction first, then match info, then master metadata
-t_cols_prefixed = [f"t_{c}" for c in t_columns]
+t_cols_prefixed = [f"t_{c}" for c in transaction.columns]
 m_cols_prefixed = [f"m_{c}" for c in master.columns if c != "itemcode"]
 ordered_cols = t_cols_prefixed + ["rank", "matched_itemcode", "distance"] + m_cols_prefixed
 results_df = results_df[ordered_cols]
@@ -163,8 +163,8 @@ final_results = []
 grouped = results_df.groupby([col for col in results_df.columns if col.startswith("t_")])
 
 for _, group in grouped:
-    # Get numeric part from t_PACKTYPE (all rows in group have the same transaction values)
-    t_packtype_val = group.iloc[0]["t_PACKTYPE"]
+    # Get numeric part from t_PACKSIZE (all rows in group have the same transaction values)
+    t_packtype_val = group.iloc[0]["t_PACKSIZE"]
     t_num = extract_numeric(t_packtype_val)
 
     chosen_row = None
@@ -189,6 +189,6 @@ for _, group in grouped:
 # Build final dataframe
 final_df = pd.DataFrame(final_results)
 
-# Save new CSV
-final_df.to_csv(FINAL_OUTPUT_CSV, index=False)
-print(f"Saved final filtered matches to {FINAL_OUTPUT_CSV}")
+# # Save new CSV
+# final_df.to_csv(FINAL_OUTPUT_CSV, index=False)
+# print(f"Saved final filtered matches to {FINAL_OUTPUT_CSV}")
