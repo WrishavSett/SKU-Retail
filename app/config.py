@@ -11,8 +11,8 @@ class Config:
 
     OUTPUT_FOLDER = "./temp"
     os.makedirs(OUTPUT_FOLDER, exist_ok=True)
-    FAISS_INDEX_FILE = "./temp/master_index.faiss"
-    METADATA_FILE = "./temp/metadata.json"
+    FAISS_INDEX_FILE = "./store/master_index.faiss"
+    METADATA_FILE = "./store/metadata.json"
     # OUTPUT_CSV = f"./temp/{transaction_name}_transaction_matches.csv"
     # FINAL_OUTPUT_CSV = f"./temp/{transaction_name}_final_matches.csv"
 
