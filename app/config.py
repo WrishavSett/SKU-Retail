@@ -18,5 +18,5 @@ class Config:
 
     # Columns
     m_columns = ['itemcode', 'catcode', 'company', 'mbrand', 'brand', 'sku', 
-                 'packtype', 'base_pack', 'flavor', 'color', 'wght', 'uom', 'mrp']
+                 'packtype', 'base_pack', 'flavor', 'color', 'wght', 'uom', 'mrp'] # category, subcat, ssubcat
     t_columns = ['CATEGORY', 'MANUFACTURE', 'BRAND', 'ITEMDESC', 'MRP', 'PACKSIZE', 'PACKTYPE']
