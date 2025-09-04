@@ -1,0 +1,2 @@
+File,Total Transactions,Top-1 Accuracy,Top-2 Accuracy,Top-3 Accuracy,Precision,Recall,Specificity,Type I Error,Type II Error
+transaction_excluded_jun23_transaction_matches.csv,2421,0.6125567947129286,0.7104502271788518,0.7620817843866171,0.2540272614622057,0.7620817843866171,0.0,1.0,0.2379182156133829
