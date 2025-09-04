@@ -17,6 +17,6 @@ class Config:
     # FINAL_OUTPUT_CSV = f"./temp/{transaction_name}_final_matches.csv"
 
     # Columns
-    m_columns = ['itemcode', 'catcode', 'company', 'mbrand', 'brand', 'sku', 
-                 'packtype', 'base_pack', 'flavor', 'color', 'wght', 'uom', 'mrp'] # category, subcat, ssubcat
+    m_columns = ['itemcode', 'catcode', 'category', 'subcat', 'ssubcat', 'company', 'mbrand', 'brand', 'sku', 
+                 'packtype', 'base_pack', 'flavor', 'color', 'wght', 'uom', 'mrp']
     t_columns = ['CATEGORY', 'MANUFACTURE', 'BRAND', 'ITEMDESC', 'MRP', 'PACKSIZE', 'PACKTYPE']
