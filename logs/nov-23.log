@@ -1,0 +1,24 @@
+|INFO| FAISS index and metadata found. Skipping build. Use --build to force rebuild.
+|INFO| Initializing LLM re-ranker with model: qwen2.5:7b
+
+|INFO| Processing transaction file: dataset/transaction/nov-23.csv
+|INFO| Running initial semantic matching for nov-23
+Transaction Queries:   0%|          | 0/4 [00:00<?, ?it/s]Transaction Queries:  25%|██▌       | 1/4 [00:01<00:03,  1.19s/it]Transaction Queries:  50%|█████     | 2/4 [00:01<00:01,  1.30it/s]Transaction Queries:  75%|███████▌  | 3/4 [00:02<00:00,  1.58it/s]Transaction Queries: 100%|██████████| 4/4 [00:02<00:00,  1.77it/s]Transaction Queries: 100%|██████████| 4/4 [00:02<00:00,  1.54it/s]
+INFO:llm_reranker:Loading matches from ./temp/nov-23_transaction_matches.csv
+INFO:llm_reranker:Processing 12 match records...
+INFO:llm_reranker:Grouping transactions by: ['t_ITEMCODE', 't_NEW_CODES', 't_STORECODE', 't_DATE']
+|INFO| Saved transaction matches to ./temp/nov-23_transaction_matches.csv
+|INFO| Running LLM re-ranking for nov-23
+LLM Re-ranking:   0%|          | 0/4 [00:00<?, ?it/s]LLM Re-ranking:  25%|██▌       | 1/4 [00:04<00:14,  5.00s/it]LLM Re-ranking:  50%|█████     | 2/4 [00:08<00:07,  3.95s/it]LLM Re-ranking:  75%|███████▌  | 3/4 [00:14<00:04,  4.96s/it]LLM Re-ranking:  75%|███████▌  | 3/4 [00:14<00:04,  4.80s/it]
+INFO:llm_reranker:Saved LLM re-ranked results to ./temp/nov-23_llm_reranked.csv
+INFO:llm_reranker:
+==================================================
+INFO:llm_reranker:LLM RE-RANKING SUMMARY
+INFO:llm_reranker:==================================================
+INFO:llm_reranker:Total transactions processed: 3
+INFO:llm_reranker:Successfully re-ranked: 3 (100.0%)
+INFO:llm_reranker:Rejected (no good match): 0 (0.0%)
+INFO:llm_reranker:LLM query failures: 0 (0.0%)
+INFO:llm_reranker:==================================================
+|INFO| LLM re-ranking completed. Results saved to ./temp/nov-23_llm_reranked.csv
+|INFO| Completed processing nov-23
