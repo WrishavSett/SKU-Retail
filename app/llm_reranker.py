@@ -171,19 +171,29 @@ Where X is the rank number (1, 2, 3, etc.) or "0" for no good match."""
         
         logger.info(f"Processing {len(matches_df)} match records...")
         
-        # Group by transaction - using the key transaction identifiers
-        # Adjust these columns based on what uniquely identifies a transaction
-        group_cols = []
-        for col in ['t_ITEMCODE', 't_NEW_CODES', 't_STORECODE', 't_DATE']:
-            if col in matches_df.columns:
-                group_cols.append(col)
+        # # Group by transaction - using the key transaction identifiers
+        # # Adjust these columns based on what uniquely identifies a transaction
+        # group_cols = []
+        # for col in ['t_ITEMCODE', 't_NEW_CODES', 't_STORECODE', 't_DATE']:
+        #     if col in matches_df.columns:
+        #         group_cols.append(col)
         
+        # if not group_cols:
+        #     logger.error("Cannot find transaction grouping columns")
+        #     return matches_df
+        
+        # logger.info(f"Grouping transactions by: {group_cols}")
+        # grouped = matches_df.groupby(group_cols)
+
+        # ✅ FIX: group by all transaction-prefixed columns to avoid dropping rows
+        group_cols = [col for col in matches_df.columns if col.startswith("t_")]
+
         if not group_cols:
             logger.error("Cannot find transaction grouping columns")
             return matches_df
         
         logger.info(f"Grouping transactions by: {group_cols}")
-        grouped = matches_df.groupby(group_cols)
+        grouped = matches_df.groupby(group_cols, dropna=False)
         
         reranked_results = []
         
