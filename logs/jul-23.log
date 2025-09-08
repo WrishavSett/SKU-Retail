@@ -1,24 +1,0 @@
-|INFO| FAISS index and metadata found. Skipping build. Use --build to force rebuild.
-|INFO| Initializing LLM re-ranker with model: qwen2.5:7b
-
-|INFO| Processing transaction file: dataset/transaction/jul-23.csv
-|INFO| Running initial semantic matching for jul-23
-Transaction Queries:   0%|          | 0/12 [00:00<?, ?it/s]Transaction Queries:   8%|▊         | 1/12 [00:01<00:13,  1.21s/it]Transaction Queries:  17%|█▋        | 2/12 [00:01<00:07,  1.28it/s]Transaction Queries:  25%|██▌       | 3/12 [00:02<00:05,  1.58it/s]Transaction Queries:  33%|███▎      | 4/12 [00:02<00:04,  1.76it/s]Transaction Queries:  42%|████▏     | 5/12 [00:03<00:04,  1.64it/s]Transaction Queries:  50%|█████     | 6/12 [00:03<00:03,  1.74it/s]Transaction Queries:  58%|█████▊    | 7/12 [00:04<00:02,  1.80it/s]Transaction Queries:  67%|██████▋   | 8/12 [00:05<00:03,  1.27it/s]Transaction Queries:  75%|███████▌  | 9/12 [00:06<00:02,  1.07it/s]Transaction Queries:  83%|████████▎ | 10/12 [00:08<00:02,  1.03s/it]Transaction Queries:  92%|█████████▏| 11/12 [00:09<00:01,  1.10s/it]Transaction Queries: 100%|██████████| 12/12 [00:10<00:00,  1.14s/it]Transaction Queries: 100%|██████████| 12/12 [00:10<00:00,  1.13it/s]
-INFO:llm_reranker:Loading matches from ./temp/jul-23_transaction_matches.csv
-INFO:llm_reranker:Processing 36 match records...
-INFO:llm_reranker:Grouping transactions by: ['t_ITEMCODE', 't_NEW_CODES', 't_STORECODE', 't_DATE']
-|INFO| Saved transaction matches to ./temp/jul-23_transaction_matches.csv
-|INFO| Running LLM re-ranking for jul-23
-LLM Re-ranking:   0%|          | 0/12 [00:00<?, ?it/s]LLM Re-ranking:   8%|▊         | 1/12 [00:03<00:35,  3.26s/it]LLM Re-ranking:  17%|█▋        | 2/12 [00:09<00:48,  4.87s/it]LLM Re-ranking:  25%|██▌       | 3/12 [00:18<01:01,  6.87s/it]LLM Re-ranking:  33%|███▎      | 4/12 [00:27<01:01,  7.70s/it]LLM Re-ranking:  42%|████▏     | 5/12 [00:42<01:12, 10.29s/it]LLM Re-ranking:  50%|█████     | 6/12 [01:00<01:17, 12.92s/it]LLM Re-ranking:  58%|█████▊    | 7/12 [01:21<01:18, 15.64s/it]LLM Re-ranking:  67%|██████▋   | 8/12 [01:52<01:21, 20.42s/it]LLM Re-ranking:  75%|███████▌  | 9/12 [02:29<01:16, 25.66s/it]LLM Re-ranking:  83%|████████▎ | 10/12 [03:06<00:58, 29.09s/it]LLM Re-ranking:  92%|█████████▏| 11/12 [03:41<00:31, 31.04s/it]LLM Re-ranking:  92%|█████████▏| 11/12 [03:41<00:20, 20.15s/it]
-INFO:llm_reranker:Saved LLM re-ranked results to ./temp/jul-23_llm_reranked.csv
-INFO:llm_reranker:
-==================================================
-INFO:llm_reranker:LLM RE-RANKING SUMMARY
-INFO:llm_reranker:==================================================
-INFO:llm_reranker:Total transactions processed: 11
-INFO:llm_reranker:Successfully re-ranked: 11 (100.0%)
-INFO:llm_reranker:Rejected (no good match): 0 (0.0%)
-INFO:llm_reranker:LLM query failures: 0 (0.0%)
-INFO:llm_reranker:==================================================
-|INFO| LLM re-ranking completed. Results saved to ./temp/jul-23_llm_reranked.csv
-|INFO| Completed processing jul-23
