@@ -1,0 +1,23 @@
+Write a code that will do the following:
+
+Run a loop that will:
+    1. Takes a transaction row (query).
+    2.  a. Takes first N number of master rows,
+        b. Prepares the master rows in a JSON format, with the keys being `row_num`.
+    3. Passes both X number of master rows and the transaction row to an LLM along with a carefully crafted prompt.
+    4. The prompt will be designed to make the LLM find the 1 closest match from that N number of master rows.
+    5. The LLM will return the following:
+        a. row_num, and,
+        b. score (normalized between 0 to 1).
+
+This loop will run until all rows from the master file are exhausted, so, for a total of 18035 master rows, this loop will run for 181 times (from 0-99, 100-199, ..., 17900-17999 and 18000-18935) and give me 181 closest matches.
+The same loop will run again, twice this time (from 0-99 and 100-181) for the 181 closest matches to give me 2 closest matches.
+The same loop will run again, only once (from 0-1) this time however to give me only 1 closest match.
+This full code run will continue for all transaction rows.
+
+Coding instructions:
+Write all code into 1 file
+Write clean, modular and documented code,
+Write function doctrings,
+Write proper print statements using either |INFO|, |OUTPUT| or |WARNING|,
+Write proper main() function.
