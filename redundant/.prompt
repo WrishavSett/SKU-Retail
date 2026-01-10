@@ -16,8 +16,22 @@ The same loop will run again, only once (from 0-1) this time however to give me 
 This full code run will continue for all transaction rows.
 
 Coding instructions:
-Write all code into 1 file
-Write clean, modular and documented code,
-Write function doctrings,
-Write proper print statements using either |INFO|, |OUTPUT| or |WARNING|,
-Write proper main() function.
+    Write all code into 1 file
+    Write clean, modular and documented code,
+    Write function doctrings,
+    Write proper print statements using either |INFO|, |OUTPUT| or |WARNING|,
+    Write proper main() function.
+
+The code will use Gemini models provided via Google AI Studio, example usage for which is as such:
+"""
+    from google import genai
+
+    client = genai.Client()
+
+    response = client.models.generate_content(
+        model="gemini-3-flash-preview",
+        contents="Explain how AI works in a few words",
+    )
+
+    print(response.text)
+"""
