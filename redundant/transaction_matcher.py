@@ -77,12 +77,9 @@ def query_llm(prompt: str) -> Dict[str, Any]:
         "format": "json",
         "options": GENERATION_OPTIONS
     }
-
     response = requests.post(OLLAMA_URL, json=payload, timeout=120)
     response.raise_for_status()
-
     raw = response.json().get("response", "")
-
     try:
         return json.loads(raw)
     except json.JSONDecodeError:
@@ -96,7 +93,6 @@ def chunk_master(master_rows: List[Dict[str, Any]],
                  chunk_size: int) -> List[Dict[str, Dict[str, Any]]]:
     chunks = []
     total = len(master_rows)
-
     for start in range(0, total, chunk_size):
         end = min(start + chunk_size, total)
         chunk = {
@@ -104,7 +100,6 @@ def chunk_master(master_rows: List[Dict[str, Any]],
             for i in range(start, end)
         }
         chunks.append(chunk)
-
     return chunks
 
 
@@ -113,31 +108,23 @@ def hierarchical_match(transaction: Dict[str, Any],
                         master_rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     current_candidates = master_rows
     iteration = 1
-
     while len(current_candidates) > 1:
         print(f"|INFO| Iteration {iteration} | Candidates: {len(current_candidates)}")
-
         chunks = chunk_master(current_candidates, MASTER_CHUNK_SIZE)
         winners = []
-
         for idx, chunk in enumerate(chunks):
             print(f"|INFO| Processing chunk {idx + 1}/{len(chunks)}")
-
             prompt = build_prompt(transaction, chunk)
             result = query_llm(prompt)
-
             row_num = int(result["row_num"])
             score = float(result["score"])
-
             winners.append({
                 "row_num": row_num,
                 "score": score,
                 "data": current_candidates[row_num]
             })
-
         current_candidates = [w["data"] for w in winners]
         iteration += 1
-
     print("|OUTPUT| Final best match found")
     return {
         "row_num": 0,
@@ -150,9 +137,7 @@ def hierarchical_match(transaction: Dict[str, Any],
 def main():
     master_data = load_csv("./redundant/master.csv", m_columns)
     transaction_data = load_csv("./redundant/transaction.csv", t_columns)
-
     results = []
-
     for idx, transaction in enumerate(transaction_data):
         print(f"\n|INFO| Processing transaction {idx + 1}/{len(transaction_data)}")
         best_match = hierarchical_match(transaction, master_data)
@@ -160,7 +145,6 @@ def main():
             "transaction_index": idx,
             "best_match": best_match
         })
-
     print("\n|OUTPUT| Matching complete for all transactions")
     print(json.dumps(results, indent=2))
 
