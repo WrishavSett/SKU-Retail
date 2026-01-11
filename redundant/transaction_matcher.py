@@ -38,7 +38,13 @@ def load_csv(filepath: str) -> List[Dict[str, Any]]:
     print(f"|INFO| Loading CSV file: {filepath}")
     with open(filepath, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
-        data = list(reader)
+        data = []
+        for row in reader:
+            clean_row = {
+                k.strip(): (v.strip() if isinstance(v, str) else v)
+                for k, v in row.items()
+            }
+            data.append(clean_row)
     print(f"|INFO| Loaded {len(data)} rows from {filepath}")
     return data
 
