@@ -3,29 +3,22 @@ import json
 from typing import List, Dict, Any
 import requests
 
-
-# ==========================
-# CONFIGURATION
-# ==========================
-
+# Dataset config
 MASTER_CHUNK_SIZE = 10
+m_columns = ['itemcode', 'catcode', 'category', 'subcat', 'ssubcat', 'company', 'mbrand', 'brand', 'sku',
+             'packtype', 'base_pack', 'flavor', 'color', 'wght', 'uom', 'mrp']
+t_columns = ['CATEGORY', 'MANUFACTURE', 'BRAND', 'ITEMDESC', 'MRP', 'PACKSIZE', 'PACKTYPE']
+
+# LLM config
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL_NAME = "llama3.2:1b"
-
 GENERATION_OPTIONS = {
     "temperature": 0.1,
     "top_p": 0.9,
     "num_predict": 50
 }
 
-m_columns = ['itemcode', 'catcode', 'category', 'subcat', 'ssubcat', 'company', 'mbrand', 'brand', 'sku',
-             'packtype', 'base_pack', 'flavor', 'color', 'wght', 'uom', 'mrp']
-t_columns = ['CATEGORY', 'MANUFACTURE', 'BRAND', 'ITEMDESC', 'MRP', 'PACKSIZE', 'PACKTYPE']
-
-# ==========================
-# DATA LOADING
-# ==========================
-
+# Data loader
 def load_csv(filepath: str, columns: List[str]) -> List[Dict[str, Any]]:
     print(f"|INFO| Loading CSV file: {filepath}")
     set_columns = set(columns)
@@ -43,10 +36,7 @@ def load_csv(filepath: str, columns: List[str]) -> List[Dict[str, Any]]:
     return data
 
 
-# ==========================
-# PROMPT ENGINEERING
-# ==========================
-
+# Prompt
 def build_prompt(transaction: Dict[str, Any],
                  master_rows: Dict[str, Dict[str, Any]]) -> str:
     return f"""
@@ -78,10 +68,7 @@ MASTER ROWS:
 """.strip()
 
 
-# ==========================
-# LLM CALL (OLLAMA)
-# ==========================
-
+# LLM call
 def query_llm(prompt: str) -> Dict[str, Any]:
     payload = {
         "model": MODEL_NAME,
@@ -104,10 +91,7 @@ def query_llm(prompt: str) -> Dict[str, Any]:
         raise
 
 
-# ==========================
-# CHUNKING LOGIC
-# ==========================
-
+# Chunk master data
 def chunk_master(master_rows: List[Dict[str, Any]],
                  chunk_size: int) -> List[Dict[str, Dict[str, Any]]]:
     chunks = []
@@ -124,10 +108,7 @@ def chunk_master(master_rows: List[Dict[str, Any]],
     return chunks
 
 
-# ==========================
-# HIERARCHICAL REDUCTION
-# ==========================
-
+# Heirarchical matching
 def hierarchical_match(transaction: Dict[str, Any],
                         master_rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     current_candidates = master_rows
@@ -165,10 +146,7 @@ def hierarchical_match(transaction: Dict[str, Any],
     }
 
 
-# ==========================
-# MAIN PIPELINE
-# ==========================
-
+# Run main
 def main():
     master_data = load_csv("./redundant/master.csv", m_columns)
     transaction_data = load_csv("./redundant/transaction.csv", t_columns)
@@ -185,7 +163,6 @@ def main():
 
     print("\n|OUTPUT| Matching complete for all transactions")
     print(json.dumps(results, indent=2))
-
 
 if __name__ == "__main__":
     main()
