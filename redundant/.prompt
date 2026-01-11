@@ -1,3 +1,22 @@
+I have a master file, first few rows of which are as follows:
+```
+itemcode,catcode,category,subcat,ssubcat,company,mbrand,brand,sku,packtype,base_pack,multipack,flavor,color,wght,uom,hpkcnv,msu,launchdate,qty,mrp,status,factcode,activeitem,active,nepalcomm,flag,audittype,price_seg,filter_seg,DELYM
+40111006,118,SOFT DRINKS-NP,PACKAGED WATER,PACKAGED WATER,BISLERI NEPAL PVT. LTD.- NEPAL,BISLERI,BISLERI,PET 500 ML,PET,500.000 ML, ,,,500.0,ML,0,0,0.0,500.0,0.0,,,N,INACTIVE,INACTIVE FROM APRIL 2024,4,2,,,202404.0
+20110035,118,SOFT DRINKS-NP,SOFT DRINKS,NON-CARBONATED,JEENHUATE FOOD - MALYASIA,JEFIT LYCHEE DRINK,JEFIT LYCHEE DRINK,MINUMAN LAICI CAN 300 ML,CAN,300.000 ML, ,LYCHEE,,300.0,ML,0,0,0.0,300.0,0.0,,,N,INACTIVE,INACTIVE FROM APRIL 2024,4,2,,,202404.0
+20110118,118,SOFT DRINKS-NP,SOFT DRINKS,CARBONATED,VARUN BEVERAGE -NEPAL,LEHAR,LEHAR,SODA PET 500 ML,PET,500.000 ML, ,SODA,,500.0,ML,0,0,200008.0,500.0,0.0,,,Y,ACTIVE,,0,2,,,
+```
+Review and wait for further instructions.
+
+
+I have a transaction file, first few rows of which are as follows:
+```
+DATE,PERIOD,AUDITYPE,STORECODE,DLRCODE,ITEMCODE,NEW_CODES,CATEGORY,MANUFACTURE,BRAND,ITEMDESC,MRP,PACKSIZE,PACKTYPE,COMMENTS,IMAGE,CODE COMMENT,FLAG
+11/12/2024,202412.0,3.0,2110100370.0,21101031706.0,1733828064964.0,99765334,105.0,JT INTERNATIONAL - SA,CAMEL CONNECT,CAMEL CONNECT ORIGINAL,161.5,20,HL,,1733828064964-jt international - sa-camel connect#3.png,RECODING,5.0
+18/11/2024,202411.0,3.0,1220100003.0,12201030162.0,1731055629590.0,99765326,124.0,DEUTI GUTKHA INDUSTRIES,MEGHA SHREE PREMIUM,MEGHA SHREE PREMIUM GUTKHA 2.20G,5.0,2.20G,PPH,,,RECODING,5.0
+22/11/2024,202411.0,3.0,2110100461.0,21101030995.0,1731937092881.0,99765321,105.0,SURYA NEPAL PVT LTD - NEPAL,SURYA FUSION,SURYA FUSION,320.0,20'S-KS,FTP,New SKU,,RECODING,5.0
+```
+Review and wait for further instructions.
+
 Write a code that will do the following:
 
 Run a loop that will:
@@ -5,14 +24,17 @@ Run a loop that will:
     2.  a. Takes first N number of master rows,
         b. Prepares the master rows in a JSON format, with the keys being `row_num`.
     3. Passes both X number of master rows and the transaction row to an LLM along with a carefully crafted prompt.
-    4. The prompt will be designed to make the LLM find the 1 closest match from that N number of master rows.
-    5. The LLM will return the following:
+    4. The prompt will be designed to make the LLM find the 1 closest match of the tranaction row from that N number of master rows.
+    5. The LLM will return the following in a JSON format:
         a. row_num, and,
         b. score (normalized between 0 to 1).
 
-This loop will run until all rows from the master file are exhausted, so, for a total of 18035 master rows, this loop will run for 181 times (from 0-99, 100-199, ..., 17900-17999 and 18000-18935) and give me 181 closest matches.
-The same loop will run again, twice this time (from 0-99 and 100-181) for the 181 closest matches to give me 2 closest matches.
-The same loop will run again, only once (from 0-1) this time however to give me only 1 closest match.
+This loop will run until all rows from the master file are exhausted.
+
+For example:
+1. For a total of let's say 1045 master rows, this loop will run for 11 times (from 0-99, 100-199, ..., 900-999 and 1000-1045) and give me 11 closest matches. The same loop will run again, once this time (from 0-11) for the 11 closest matches to give me 1 closest matche.
+2. For a total of let's say 10090 master rows, this loop will run for 110 times (from 0-99, 100-199, ..., 9900-9999 and 10000-10090) and give me 110 closest matches. The same loop will run again, twice this time (from 0-99 and 100-110) for the 110 closest matches to give me 2 closest matches. The same loop will run again, once this time (from 0-1) for the 2 closest matches to give me 1 closest match.
+
 This full code run will continue for all transaction rows.
 
 Coding instructions:
@@ -21,9 +43,11 @@ Coding instructions:
     Write function doctrings,
     Write proper print statements using either |INFO|, |OUTPUT| or |WARNING|,
     Write proper main() function.
+    
+Use all master and transaction data fields and do not leave out any.
 
-The code will use Gemini models provided via Google AI Studio, example usage for which is as such:
-"""
+The code will use Google Gemini models provided via Google AI Studio, example usage for which is as such:
+```
     from google import genai
 
     client = genai.Client()
@@ -34,4 +58,4 @@ The code will use Gemini models provided via Google AI Studio, example usage for
     )
 
     print(response.text)
-"""
+```
