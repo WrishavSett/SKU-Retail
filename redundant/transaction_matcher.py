@@ -131,8 +131,8 @@ def hierarchical_match(transaction: Dict[str, Any],
 
 # Run main
 def main():
-    master_data = load_csv("./redundant/master.csv", m_columns)
-    transaction_data = load_csv("./redundant/transaction.csv", t_columns)
+    master_data = load_csv("./redundant/data_master.csv", m_columns)
+    transaction_data = load_csv("./redundant/data_transaction.csv", t_columns)
     results = []
     for idx, transaction in enumerate(transaction_data):
         print(f"\n|INFO| Processing transaction {idx + 1}/{len(transaction_data)}")
