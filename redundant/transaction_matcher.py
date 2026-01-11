@@ -94,7 +94,7 @@ def query_llm(prompt: str) -> Dict[str, Any]:
     response = requests.post(OLLAMA_URL, json=payload, timeout=120)
     response.raise_for_status()
 
-    raw = response.json().get("response", "").strip()
+    raw = response.json().get("response", "")
 
     try:
         return json.loads(raw)
@@ -145,24 +145,23 @@ def hierarchical_match(transaction: Dict[str, Any],
             prompt = build_prompt(transaction, chunk)
             result = query_llm(prompt)
 
-            row_key = str(result["row_num"])
+            row_num = int(result["row_num"])
             score = float(result["score"])
 
             winners.append({
-                "row_num": row_key,
+                "row_num": row_num,
                 "score": score,
-                "data": current_candidates[int(row_key)]
+                "data": current_candidates[row_num]
             })
 
         current_candidates = [w["data"] for w in winners]
         iteration += 1
 
     print("|OUTPUT| Final best match found")
-    final_candidate = current_candidates[0]
     return {
-        "row_num": final_candidate["_orig_index"],
+        "row_num": 0,
         "score": 1.0,
-        "data": final_candidate
+        "data": current_candidates[0]
     }
 
 
@@ -173,10 +172,6 @@ def hierarchical_match(transaction: Dict[str, Any],
 def main():
     master_data = load_csv("./redundant/master.csv")
     transaction_data = load_csv("./redundant/transaction.csv")
-
-    # Add original index to each master row
-    for idx, row in enumerate(master_data):
-        row["_orig_index"] = idx
 
     results = []
 
