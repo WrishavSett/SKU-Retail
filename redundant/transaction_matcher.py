@@ -35,7 +35,6 @@ def load_csv(filepath: str, columns: List[str]) -> List[Dict[str, Any]]:
     print(f"|INFO| Loaded {len(data)} rows from {filepath}")
     return data
 
-
 # Prompt
 def build_prompt(transaction: Dict[str, Any],
                  master_rows: Dict[str, Dict[str, Any]]) -> str:
@@ -87,7 +86,6 @@ def query_llm(prompt: str) -> Dict[str, Any]:
         print(raw)
         raise
 
-
 # Chunk master data
 def chunk_master(master_rows: List[Dict[str, Any]],
                  chunk_size: int) -> List[Dict[str, Dict[str, Any]]]:
@@ -101,7 +99,6 @@ def chunk_master(master_rows: List[Dict[str, Any]],
         }
         chunks.append(chunk)
     return chunks
-
 
 # Heirarchical matching
 def hierarchical_match(transaction: Dict[str, Any],
@@ -131,7 +128,6 @@ def hierarchical_match(transaction: Dict[str, Any],
         "score": 1.0,
         "data": current_candidates[0]
     }
-
 
 # Run main
 def main():
