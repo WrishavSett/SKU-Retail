@@ -1,14 +1,3 @@
-"""
-LLM-based Hierarchical Matching Engine
--------------------------------------
-
-This script finds the closest matching master record for each transaction record
-using Ollama with the llama3.2:1b model. It performs chunk-wise elimination until
-a single best match remains.
-
-Author: ---
-"""
-
 import csv
 import json
 from typing import List, Dict, Any
@@ -29,13 +18,17 @@ GENERATION_OPTIONS = {
     "num_predict": 50
 }
 
+m_columns = ['itemcode', 'catcode', 'category', 'subcat', 'ssubcat', 'company', 'mbrand', 'brand', 'sku',
+             'packtype', 'base_pack', 'flavor', 'color', 'wght', 'uom', 'mrp']
+t_columns = ['CATEGORY', 'MANUFACTURE', 'BRAND', 'ITEMDESC', 'MRP', 'PACKSIZE', 'PACKTYPE']
 
 # ==========================
 # DATA LOADING
 # ==========================
 
-def load_csv(filepath: str) -> List[Dict[str, Any]]:
+def load_csv(filepath: str, columns: List[str]) -> List[Dict[str, Any]]:
     print(f"|INFO| Loading CSV file: {filepath}")
+    set_columns = set(columns)
     with open(filepath, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         data = []
@@ -43,6 +36,7 @@ def load_csv(filepath: str) -> List[Dict[str, Any]]:
             clean_row = {
                 k.strip(): (v.strip() if isinstance(v, str) else v)
                 for k, v in row.items()
+                if k.strip() in set_columns
             }
             data.append(clean_row)
     print(f"|INFO| Loaded {len(data)} rows from {filepath}")
@@ -176,8 +170,8 @@ def hierarchical_match(transaction: Dict[str, Any],
 # ==========================
 
 def main():
-    master_data = load_csv("./redundant/master.csv")
-    transaction_data = load_csv("./redundant/transaction.csv")
+    master_data = load_csv("./redundant/master.csv", m_columns)
+    transaction_data = load_csv("./redundant/transaction.csv", t_columns)
 
     results = []
 
