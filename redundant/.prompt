@@ -17,6 +17,7 @@ DATE,PERIOD,AUDITYPE,STORECODE,DLRCODE,ITEMCODE,NEW_CODES,CATEGORY,MANUFACTURE,B
 ```
 Review and wait for further instructions.
 
+
 Write a code that will do the following:
 
 Run a loop that will:
@@ -42,6 +43,7 @@ Coding instructions:
     Write clean, modular and documented code,
     Write function doctrings,
     Write proper print statements using either |INFO|, |OUTPUT| or |WARNING|,
+    Write proper csv data loader function.
     Write proper main() function.
     
 Use all master and transaction data fields and do not leave out any.
