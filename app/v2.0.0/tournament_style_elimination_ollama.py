@@ -1,6 +1,7 @@
 # Imports
 import re
 import os
+import csv
 import ollama
 import numpy as np
 import pandas as pd
@@ -195,15 +196,49 @@ def tournament_match(
 
     return candidates
 
+def process_all_transactions(
+    master_dict: dict,
+    transaction_dict: dict,
+    chunk_size: int = chunk_size,
+    max_iterations: int = max_iterations
+):
+    matches = []
+
+    for transaction_row_index, transaction_row in transaction_dict.items():
+        final_candidate = tournament_match(
+            master_dict=master_dict,
+            transaction_row={transaction_row_index: transaction_row},
+            chunk_size=chunk_size,
+            max_iterations=max_iterations
+        )
+
+        matches.append((transaction_row_index, final_candidate))
+
+    return matches
+
+def write_all_matches_to_file(
+    matches: list,
+    output_file_path: str = "./redundant/matches_output.csv"
+):
+    with open(output_file_path, mode="w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["transaction row index", "master row index"])
+        for transaction_index, candidate_dict in matches:
+            if candidate_dict:
+                master_row_index = next(iter(candidate_dict.keys()))
+                writer.writerow([transaction_index, master_row_index])
+            else:
+                writer.writerow([transaction_index, None])
+
 def main():
-    final_candidate = tournament_match(
+    matches = process_all_transactions(
         master_dict=master_dict,
-        transaction_row={0: transaction_dict[0]},
+        transaction_dict=transaction_dict,
         chunk_size=chunk_size,
         max_iterations=max_iterations
     )
 
-    print("Final match:", final_candidate)
+    write_all_matches_to_file(matches)
 
 if __name__ == "__main__":
     main()
