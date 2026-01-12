@@ -30,35 +30,50 @@ master_dict = master_file.to_dict(orient='index')
 transaction_file = pd.read_csv(transaction_file_path, usecols=t_columns)
 transaction_dict = transaction_file.to_dict(orient='index')
 
+# Split PACKSIZE number and unit
+def split_packsize(packsize):
+    if packsize is None:
+        return None, None
+    s = str(packsize).strip().upper().replace('.', '')
+    match = re.search(r'(\d+(?:\.\d+)?)\s*([A-Z][A-Z\-]*)?', s)
+    if match:
+        number = match.group(1)
+        unit = match.group(2) if match.group(2) else None
+        return number, unit
+    else:
+        return None, None
+
 # Format data for prompt generation
 def format_master(master_row):
     return f"""
-Item Code: {master_row['itemcode']}
-Category Code: {master_row['catcode']}
-Category: {master_row['category']}
-Subcategory: {master_row['subcat']}
-Sub-Subcategory: {master_row['ssubcat']}
-Company: {master_row['company']}
-Main Brand: {master_row['mbrand']}
-Brand: {master_row['brand']}
-Pack Type: {master_row['packtype']}
-Pack Size: {master_row['base_pack']}
-Flavor: {master_row['flavor']}
-Color: {master_row['color']}
-Unit of Measure: {master_row['uom']}
-MRP: {master_row['mrp']}
+Item Code: {master_row.get('itemcode', '')}
+Category Code: {master_row.get('catcode', '')}
+Category: {master_row.get('category', '')}
+Subcategory: {master_row.get('subcat', '')}
+Sub-Subcategory: {master_row.get('ssubcat', '')}
+Company: {master_row.get('company', '')}
+Main Brand: {master_row.get('mbrand', '')}
+Brand: {master_row.get('brand', '')}
+Pack Type: {master_row.get('packtype', '')}
+Pack Size: {master_row.get('base_pack', '')}
+Flavor: {master_row.get('flavor', '')}
+Color: {master_row.get('color', '')}
+Unit of Measure: {master_row.get('uom', '')}
+MRP: {master_row.get('mrp', '')}
     """
 
 def format_transaction(transaction_row):
+    packsize, uom = split_packsize(transaction_row['PACKSIZE'])
+
     return f"""
-Category Code: {transaction_row['CATEGORY']}
-Company: {transaction_row['MANUFACTURE']}
-Brand: {transaction_row['BRAND']}
-Item Description: {transaction_row['ITEMDESC']}
-MRP: {transaction_row['MRP']}
-Pack Size: {re.match(r'(\d+)\s*(.*)', transaction_row['PACKSIZE']).group(1)}
-Unit of Measure: {re.match(r'(\d+)\s*(.*)', transaction_row['PACKSIZE']).group(2)}
-Pack Type: {transaction_row['PACKTYPE']}
+Category Code: {transaction_row.get('CATEGORY', '')}
+Company: {transaction_row.get('MANUFACTURE', '')}
+Brand: {transaction_row.get('BRAND', '')}
+Item Description: {transaction_row.get('ITEMDESC', '')}
+MRP: {transaction_row.get('MRP', '')}
+Pack Size: {packsize or ''}
+Unit of Measure: {uom or ''}
+Pack Type: {transaction_row.get('PACKTYPE', '')}
     """
 
 # Format context data for LLM prompt
