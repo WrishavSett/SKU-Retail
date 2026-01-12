@@ -82,18 +82,6 @@ def format_query_match(transaction_dictionary) -> str:
         context_lines.append(f"Transaction item {idx}:{formatted_row}")
     return "\n".join(context_lines)
 
-# Call LLM
-def call_llm(prompt):
-    response = ollama.generate(
-    model=model_name,
-    prompt=prompt,
-    stream=False,
-    format="json",
-    options=llm_options
-    )
-    response_text = response['response'].strip()
-    return response_text
-
 # Generate prompt
 def generate_prompt(context_rows, transaction_row):
   prompt = f"""
@@ -127,6 +115,18 @@ Respond strictly with a JSON object in the following format:
 }}
   """
   return prompt
+
+# Call LLM
+def call_llm(prompt):
+    response = ollama.generate(
+    model=model_name,
+    prompt=prompt,
+    stream=False,
+    format="json",
+    options=llm_options
+    )
+    response_text = response['response'].strip()
+    return response_text
 
 # Tournament style elimination
 def reduce_once(

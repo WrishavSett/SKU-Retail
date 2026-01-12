@@ -8,16 +8,10 @@ from google import genai
 from google.genai import types
 
 # Configuration
-gemini_api_key = "AIzaSyDJ7SIlL-NPVIVinMVNjkCb2mKMRv6g0Xg"
+gemini_api_key = os.getenv("GEMINI_API_KEY")
 client = genai.Client(api_key=gemini_api_key)
 
 model_name = "gemini-3-flash-preview"
-gen_config = types.GenerateContentConfig(
-    temperature=0.1,
-    top_p=0.9,
-    max_output_tokens=50,
-    response_mime_type="application/json"
-)
 chunk_size = 10
 max_iterations = 10
 
@@ -31,11 +25,9 @@ t_columns = ['CATEGORY', 'MANUFACTURE', 'BRAND', 'ITEMDESC', 'MRP', 'PACKSIZE', 
 # Data loader
 master_file = pd.read_csv(master_file_path, usecols=m_columns)
 master_dict = master_file.to_dict(orient='index')
-master_file.head()
 
 transaction_file = pd.read_csv(transaction_file_path, usecols=t_columns)
 transaction_dict = transaction_file.to_dict(orient='index')
-transaction_file.head()
 
 # Format data for prompt generation
 def format_master(master_row):
@@ -88,17 +80,6 @@ def format_query_match(transaction_dictionary) -> str:
         context_lines.append(f"Transaction item {idx}:{formatted_row}")
     return "\n".join(context_lines)
 
-# Call LLM
-def call_llm(prompt):
-    response = client.models.generate_content(
-        model=model_name,
-        contents=prompt,
-        # config=gen_config
-    )
-
-    print("Gemini response:", response)
-    return response
-
 # Generate prompt
 def generate_prompt(context_rows, transaction_row):
   prompt = f"""
@@ -133,6 +114,32 @@ Respond strictly with a JSON object in the following format:
   """
   return prompt
 
+# Call LLM
+def call_llm(prompt):
+    response = client.models.generate_content(
+        model=model_name,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            thinking_config=types.ThinkingConfig(thinking_budget=0), # Disables thinking
+            system_instruction="""
+                You are a an expert product matching AI.
+                Return ONLY a valid JSON object that strictly adheres to the specified schema.
+                """,
+            temperature=0.1,
+            response_mime_type="application/json",
+            response_schema={
+                "type": "object",
+                "properties": {
+                    "context_item": {"type": "string"},
+                    "score": {"type": "number"}
+                },
+                "required": ["context_item", "score"]
+            }
+        )
+    )
+    
+    return response.parsed
+
 # Tournament style elimination
 def reduce_once(
     candidates: dict,
@@ -161,7 +168,8 @@ def reduce_once(
         response = call_llm(prompt)
 
         try:
-            parsed = json.loads(response)
+            # parsed = json.loads(response)
+            parsed = response
             chunk_idx = int(parsed["context_item"])
             winner_id = chunk_ids[chunk_idx]
 
