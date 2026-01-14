@@ -176,7 +176,8 @@ def reduce_once(
         chunk_ids = candidate_ids[start:end]
 
         context_rows = {
-            i: candidates[cid]
+            # i: candidates[cid]
+            i: candidates[cid]["row"]
             for i, cid in enumerate(chunk_ids)
         }
 
@@ -188,8 +189,15 @@ def reduce_once(
             parsed = response
             chunk_idx = int(parsed["context_item"])
             winner_id = chunk_ids[chunk_idx]
+            winner_score = float(parsed["score"])
 
-            reduced[winner_id] = candidates[winner_id]
+            prev_score = candidates[winner_id]["score"]
+
+            # reduced[winner_id] = candidates[winner_id]
+            reduced[winner_id] = {
+                "row": candidates[winner_id]["row"],
+                "score": prev_score * winner_score
+            }
 
         except (json.JSONDecodeError, KeyError, ValueError, IndexError):
             pass
@@ -204,7 +212,11 @@ def tournament_match(
     chunk_size: int = chunk_size,
     max_iterations: int = max_iterations
 ):
-    candidates = master_dict
+    # candidates = master_dict
+    candidates = {
+        k: {"row": v, "score": 1.0}
+        for k, v in master_dict.items()
+    }
     iteration = 1
 
     while len(candidates) > 1 and iteration <= max_iterations:
@@ -250,13 +262,19 @@ def write_all_matches_to_file(
 ):
     with open(output_file_path, mode="w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["transaction row index", "master row index"])
+        writer.writerow(["transaction row index", "master row index", "score"])
         for transaction_index, candidate_dict in matches:
             if candidate_dict:
-                master_row_index = next(iter(candidate_dict.keys()))
-                writer.writerow([transaction_index, master_row_index])
+                # master_row_index = next(iter(candidate_dict.keys()))
+                # writer.writerow([transaction_index, master_row_index])
+                master_row_index, data = next(iter(candidate_dict.items()))
+                writer.writerow([
+                    transaction_index,
+                    master_row_index,
+                    round(data["score"], 4)
+                ])
             else:
-                writer.writerow([transaction_index, None])
+                writer.writerow([transaction_index, None, None])
 
 def main():
     matches = process_all_transactions(
